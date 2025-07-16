@@ -42,6 +42,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Commit and push /public directory
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git fetch origin ${{ github.ref }}
           git checkout ${{ github.ref }}
@@ -50,5 +52,6 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "chore: auto-update markmap htmls [skip ci]"
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
             git push origin HEAD:${{ github.ref }}
           fi
