@@ -56,3 +56,22 @@ jobs:
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
             git push origin HEAD:${{ github.ref }}
           fi
+
+      - name: Sync /public to wiki
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git wiki-tmp
+          rm -rf wiki-tmp/*
+          cp -r public/* wiki-tmp/
+          cd wiki-tmp
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No wiki changes to commit."
+          else
+            git commit -m "chore: sync markmap htmls to wiki [skip ci]"
+            git push origin master
+          fi
