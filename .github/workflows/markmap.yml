@@ -22,6 +22,7 @@ jobs:
 
       - name: Find and convert all .md files to HTML in /public, preserving structure
         run: |
+          rm -rf public
           mkdir -p public
           find . -type f -name '*.md' | while read mdfile; do
             htmlfile="public/${mdfile#./}"
