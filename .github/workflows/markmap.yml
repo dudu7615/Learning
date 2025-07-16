@@ -1,0 +1,54 @@
+name: Convert Markdown to Markmap HTML
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  markmap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install markmap-cli
+        run: npm install -g markmap-cli
+
+      - name: Find and convert all .md files to HTML in /public, preserving structure
+        run: |
+          mkdir -p public
+          find . -type f -name '*.md' | while read mdfile; do
+            htmlfile="public/${mdfile#./}"
+            htmlfile="${htmlfile%.md}.html"
+            mkdir -p "$(dirname "$htmlfile")"
+            markmap "$mdfile" -o "$htmlfile"
+          done
+
+      - name: Upload /public as artifact (可选)
+        uses: actions/upload-artifact@v3
+        with:
+          name: markmap-html
+          path: public
+
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push /public directory
+        run: |
+          git fetch origin ${{ github.ref }}
+          git checkout ${{ github.ref }}
+          git add public
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: auto-update markmap htmls [skip ci]"
+            git push origin HEAD:${{ github.ref }}
+          fi
