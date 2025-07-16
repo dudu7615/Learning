@@ -31,7 +31,7 @@ jobs:
           done
 
       - name: Upload /public as artifact (可选)
-        uses: actions/upload-artifact@v4.
+        uses: actions/upload-artifact@v4
         with:
           name: markmap-html
           path: public
