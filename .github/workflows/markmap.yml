@@ -51,11 +51,11 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout ${{ github.ref }}
-          git add public/html
+          git add public
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "chore: auto-update markmap htmls [skip ci]"
+            git commit -m "auto-update markmap htmls [skip ci]"
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
             git push origin HEAD:${{ github.ref }}
           fi
