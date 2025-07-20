@@ -27,11 +27,14 @@ jobs:
           CURRENT_COMMIT=$(git rev-parse HEAD)
           # 生成两次提交之间的差异
           DIFF=$(git diff $PREVIOUS_COMMIT $CURRENT_COMMIT || true)
-          # 将差异内容转义，以便在后续步骤中正确处理
-          # DIFF="${DIFF//'%'/'%25'}"
-          # DIFF="${DIFF//$'\n'/'%0A'}"
-          # DIFF="${DIFF//$'\r'/'%0D'}"
-          echo "$DIFF" >> $GITHUB_ENV
+          # 转义特殊字符，避免破坏环境文件格式
+          ESCAPED_DIFF="${DIFF//'%'/'%25'}"
+          ESCAPED_DIFF="${ESCAPED_DIFF//$'\n'/'%0A'}"
+          ESCAPED_DIFF="${ESCAPED_DIFF//$'\r'/'%0D'}"
+          # 使用 GitHub 环境文件语法设置多行环境变量
+          echo "diff<<EOF" >> $GITHUB_ENV
+          echo "$ESCAPED_DIFF" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -67,7 +70,7 @@ jobs:
 
       - name: pack PDF files
         run: zip -r public/思维导图.zip public/pdf
-      
+
       - name: create Release
         id: create_release
         uses: actions/create-release@v1
@@ -78,7 +81,7 @@ jobs:
           release_name: Release ${{ env.date_time }}
           body: |
             发布时间: ${{ env.date_time }}
-            
+
             ### 代码变更
             ```diff
             ${{ env.diff }}
