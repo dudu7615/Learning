@@ -22,10 +22,10 @@ jobs:
 
       - name: Find and convert all .md files to HTML in /public, preserving structure
         run: |
-          rm -rf public
-          mkdir -p public
+          rm -rf public/html
+          mkdir -p public/html
           find . -type f -name '*.md' | while read mdfile; do
-            htmlfile="public/${mdfile#./}"
+            htmlfile="public/html/${mdfile#./}"
             htmlfile="${htmlfile%.md}.html"
             mkdir -p "$(dirname "$htmlfile")"
             markmap "$mdfile" -o "$htmlfile"
@@ -35,7 +35,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: markmap-html
-          path: public
+          path: public/html
 
       - name: Configure git
         run: |
@@ -48,7 +48,7 @@ jobs:
         run: |
           git fetch origin ${{ github.ref }}
           git checkout ${{ github.ref }}
-          git add public
+          git add public/html
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
