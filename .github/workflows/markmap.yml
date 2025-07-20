@@ -34,7 +34,7 @@ jobs:
           mkdir -p public/pdf
 
       - name: Find and convert all .md files to HTML in /public, preserving structure
-        run: .tools/md2html.sh
+        run: bash .tools/md2html.sh
 
       - name: Convert all HTML in public/html to PDF in public/pdf (preserve structure)
         run: node .tools/html2pdf.js
