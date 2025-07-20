@@ -11,6 +11,27 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          - fetch-depth: 0
+
+      - name: get date time
+        id: date
+        run: echo "date_time=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
+      - name: get git diff
+        id: git_diff
+        run: |
+          # 获取上一次提交的 SHA
+          PREVIOUS_COMMIT=$(git rev-parse HEAD^)
+          # 获取当前提交的 SHA
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          # 生成两次提交之间的差异
+          DIFF=$(git diff $PREVIOUS_COMMIT $CURRENT_COMMIT || true)
+          # 将差异内容转义，以便在后续步骤中正确处理
+          DIFF="${DIFF//'%'/'%25'}"
+          DIFF="${DIFF//$'\n'/'%0A'}"
+          DIFF="${DIFF//$'\r'/'%0D'}"
+          echo "diff=$DIFF" >> $GITHUB_ENV
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -46,12 +67,34 @@ jobs:
 
       - name: pack PDF files
         run: zip -r public/思维导图.zip public/pdf
-
-      - name: upload PDF zip
-        uses: actions/upload-artifact@v4
+      
+      - name: create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: markmap-pdf
-          path: public/思维导图.zip
+          tag_name: release-${{ env.date_time }}
+          release_name: Release ${{ env.date_time }}
+          body: |
+            发布时间: ${{ env.date_time }}
+
+            ### 代码变更
+            ```diff
+            ${{ env.diff }}
+            ```
+          draft: false
+          prerelease: false
+
+      - name: upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./public/思维导图.zip
+          asset_name: 思维导图.zip
+          asset_content_type: application/zip
 
       # - name: Commit and push /public directory
       #   env:
