@@ -26,6 +26,13 @@ const path = require('path');
         fs.mkdirSync(path.dirname(pdffile), { recursive: true });
         const page = await browser.newPage();
         await page.goto('file://' + path.resolve(htmlfile), { waitUntil: 'networkidle0' });
+        await page.addStyleTag({
+            content: `
+            body, * {
+              font-family: "Noto Sans SC", "Microsoft YaHei", "SimSun", "STSong", "Arial Unicode MS", Arial, sans-serif !important;
+            }
+          `
+        });
         await page.pdf({ path: pdffile, format: 'A4' });
         await page.close();
         console.log(`Converted ${htmlfile} -> ${pdffile}`);
