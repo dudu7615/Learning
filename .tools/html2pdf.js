@@ -7,6 +7,7 @@ const path = require('path');
     const files = process.argv[2] ? [process.argv[2]] : [];
 
     if (!files.length) {
+        // 递归查找 public/html 目录下的所有 .html 文件
         function walk(dir) {
             let results = [];
             fs.readdirSync(dir).forEach(file => {
@@ -30,7 +31,7 @@ const path = require('path');
         await page.goto('file://' + path.resolve(htmlfile), { waitUntil: 'networkidle0' });
 
         // 计算更精确的页面宽度
-        const maxWidth = await page.evaluate(() => {
+        const pageWidth = await page.evaluate(() => {
             const elements = document.querySelectorAll('body *');
             let max = document.body.scrollWidth;
             elements.forEach(el => {
@@ -43,39 +44,20 @@ const path = require('path');
             return max;
         });
 
-        // 定义最大宽度、最小缩放比例、目标宽度
-        const maxAllowedWidth = 3000;
+        // 定义一个固定的目标宽度和最小缩放比例
+        const targetWidth = 1800;
         const minScale = 0.6;
-        const targetWidth = 1200;
-        let scale = 1;
-        let width = maxWidth;
+        let scale = targetWidth / pageWidth;
 
-        if (maxWidth > maxAllowedWidth) {
-            scale = maxAllowedWidth / maxWidth;
-            if (scale < minScale) {
-                scale = minScale;
-                width = maxWidth / scale;
-            } else {
-                width = maxAllowedWidth;
-            }
+        // 确保缩放比例不低于最小缩放比例
+        if (scale < minScale) {
+            scale = minScale;
         }
-
-        // 如果宽度仍然过大，进一步调整缩放比例以接近目标宽度
-        if (width > targetWidth) {
-            scale = scale * (targetWidth / width);
-            width = targetWidth;
-        }
-
-        // 临时调整页面的缩放样式
-        await page.evaluate((s) => {
-            document.body.style.transform = `scale(${s})`;
-            document.body.style.transformOrigin = 'top left';
-        }, scale);
 
         await page.pdf({
             path: pdffile,
-            width: `${width}px`,
-            scale: 1, // 由于已经在页面内调整了缩放，这里 scale 设为 1
+            width: `${targetWidth}px`,
+            scale: scale,
             printBackground: true
         });
 
