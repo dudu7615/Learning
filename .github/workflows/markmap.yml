@@ -96,7 +96,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./public/思维导图.zip
-          asset_name: 思维导图_${{ env.date_time }}.zip
+          asset_name: ${{ env.date_time }}.zip
           asset_content_type: application/zip
 
       # - name: Commit and push /public directory
