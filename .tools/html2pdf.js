@@ -7,7 +7,6 @@ const path = require('path');
     const files = process.argv[2] ? [process.argv[2]] : [];
 
     if (!files.length) {
-        // 递归查找 public/html 目录下的所有 .html 文件
         function walk(dir) {
             let results = [];
             fs.readdirSync(dir).forEach(file => {
@@ -29,22 +28,28 @@ const path = require('path');
         fs.mkdirSync(path.dirname(pdffile), { recursive: true });
         const page = await browser.newPage();
         await page.goto('file://' + path.resolve(htmlfile), { waitUntil: 'networkidle0' });
-        
-        await page.waitForTimeout(2000); 
-        // 获取 HTML 页面的实际宽度
-        const bodyWidth = await page.evaluate(() => {
-            return document.body.scrollWidth;
+
+        // 计算更精确的页面宽度
+        const maxWidth = await page.evaluate(() => {
+            const elements = document.querySelectorAll('body *');
+            let max = document.body.scrollWidth;
+            elements.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const right = rect.right + window.pageXOffset;
+                if (right > max) {
+                    max = right;
+                }
+            });
+            return max;
         });
 
-        // 定义最大宽度和默认缩放比例
-        const maxWidth = 2000;
+        const safeMaxWidth = 3000;
         let scale = 1;
-        let width = bodyWidth;
+        let width = maxWidth;
 
-        // 如果页面宽度超过最大宽度，调整缩放比例和宽度
-        if (bodyWidth > maxWidth) {
-            scale = maxWidth / bodyWidth;
-            width = maxWidth;
+        if (maxWidth > safeMaxWidth) {
+            scale = safeMaxWidth / maxWidth;
+            width = safeMaxWidth;
         }
 
         await page.pdf({
