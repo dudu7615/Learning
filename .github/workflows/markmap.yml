@@ -67,11 +67,8 @@ jobs:
 
       - name: pack PDF files
         run: |
-          echo $(pwd)
-          echo $(ls)
-          echo $(ls ..)
           cd public/pdf
-          zip -r public/思维导图.zip .
+          zip -r ../思维导图.zip .
           cd ../../
 
       - name: create Release
