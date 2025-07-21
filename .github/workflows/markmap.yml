@@ -67,6 +67,7 @@ jobs:
 
       - name: pack PDF files
         run: |
+          echo $(pwd)
           cd public/pdf
           zip -r public/思维导图.zip .
           cd ../../
