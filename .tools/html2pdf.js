@@ -23,12 +23,9 @@ const path = require('path');
         files.push(...walk('public/html'));
     }
 
-    // A4 尺寸（单位：毫米）
-    const a4Width = 210;
-    const a4Height = 297;
-    // 将毫米转换为像素（假设 96 DPI）
-    const a4WidthPx = a4Width * (96 / 25.4);
-    const a4HeightPx = a4Height * (96 / 25.4);
+    // A4 尺寸（像素，假设 96 DPI）
+    const a4WidthPx = 842;
+    const a4HeightPx = 595;
 
     for (const htmlfile of files) {
         const rel = path.relative('public/html', htmlfile);
@@ -57,14 +54,20 @@ const path = require('path');
         });
 
         let landscape = false;
-        let scale = 1;
+        let scale;
 
         // 动态确定使用横向或纵向
         if (pageSize.width > pageSize.height) {
             landscape = true;
-            scale = Math.min(a4HeightPx / pageSize.width, a4WidthPx / pageSize.height);
-        } else {
             scale = Math.min(a4WidthPx / pageSize.width, a4HeightPx / pageSize.height);
+        } else {
+            scale = Math.min(a4HeightPx / pageSize.height, a4WidthPx / pageSize.width);
+        }
+
+        // 设定最大缩放比例，避免内容过大
+        const maxScale = 2;
+        if (scale > maxScale) {
+            scale = maxScale;
         }
 
         await page.pdf({
