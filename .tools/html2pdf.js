@@ -7,6 +7,7 @@ const path = require('path');
     const files = process.argv[2] ? [process.argv[2]] : [];
 
     if (!files.length) {
+        // 递归查找 public/html 目录下的所有 .html 文件
         function walk(dir) {
             let results = [];
             fs.readdirSync(dir).forEach(file => {
@@ -43,13 +44,21 @@ const path = require('path');
             return max;
         });
 
-        const safeMaxWidth = 3000;
+        // 定义最大宽度、最小缩放比例
+        const maxAllowedWidth = 3000;
+        const minScale = 0.3;
         let scale = 1;
         let width = maxWidth;
 
-        if (maxWidth > safeMaxWidth) {
-            scale = safeMaxWidth / maxWidth;
-            width = safeMaxWidth;
+        if (maxWidth > maxAllowedWidth) {
+            scale = maxAllowedWidth / maxWidth;
+            // 确保缩放比例不低于最小缩放比例
+            if (scale < minScale) {
+                scale = minScale;
+                width = maxWidth / scale;
+            } else {
+                width = maxAllowedWidth;
+            }
         }
 
         await page.pdf({
