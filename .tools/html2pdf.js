@@ -23,6 +23,13 @@ const path = require('path');
         files.push(...walk('public/html'));
     }
 
+    // A4 尺寸（单位：毫米）
+    const a4Width = 210;
+    const a4Height = 297;
+    // 将毫米转换为像素（假设 96 DPI）
+    const a4WidthPx = a4Width * (96 / 25.4);
+    const a4HeightPx = a4Height * (96 / 25.4);
+
     for (const htmlfile of files) {
         const rel = path.relative('public/html', htmlfile);
         const pdffile = path.join('public/pdf', rel.replace(/\.html$/, '.pdf'));
@@ -30,33 +37,40 @@ const path = require('path');
         const page = await browser.newPage();
         await page.goto('file://' + path.resolve(htmlfile), { waitUntil: 'networkidle0' });
 
-        // 计算更精确的页面宽度
-        const pageWidth = await page.evaluate(() => {
+        // 计算页面内容的宽度和高度
+        const pageSize = await page.evaluate(() => {
             const elements = document.querySelectorAll('body *');
-            let max = document.body.scrollWidth;
+            let maxWidth = document.body.scrollWidth;
+            let maxHeight = document.body.scrollHeight;
             elements.forEach(el => {
                 const rect = el.getBoundingClientRect();
                 const right = rect.right + window.pageXOffset;
-                if (right > max) {
-                    max = right;
+                const bottom = rect.bottom + window.pageYOffset;
+                if (right > maxWidth) {
+                    maxWidth = right;
+                }
+                if (bottom > maxHeight) {
+                    maxHeight = bottom;
                 }
             });
-            return max;
+            return { width: maxWidth, height: maxHeight };
         });
 
-        // 定义一个固定的目标宽度和最小缩放比例
-        const targetWidth = 1800;
-        const minScale = 0.6;
-        let scale = targetWidth / pageWidth;
+        let landscape = false;
+        let scale = 1;
 
-        // 确保缩放比例不低于最小缩放比例
-        if (scale < minScale) {
-            scale = minScale;
+        // 动态确定使用横向或纵向
+        if (pageSize.width > pageSize.height) {
+            landscape = true;
+            scale = Math.min(a4HeightPx / pageSize.width, a4WidthPx / pageSize.height);
+        } else {
+            scale = Math.min(a4WidthPx / pageSize.width, a4HeightPx / pageSize.height);
         }
 
         await page.pdf({
             path: pdffile,
-            width: `${targetWidth}px`,
+            format: 'A4',
+            landscape: landscape,
             scale: scale,
             printBackground: true
         });
