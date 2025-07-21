@@ -1,80 +1,60 @@
 import os
-import asyncio
-from pyppeteer import launch
+import shutil
 from pathlib import Path
+from weasyprint import HTML
 
-async def convert_html_to_pdf(html_path, pdf_path):
-    """将单个HTML文件转换为PDF"""
-    browser = await launch(headless=True)
-    page = await browser.newPage()
-    
-    # 读取HTML文件内容
-    with open(html_path, 'r', encoding='utf-8') as f:
-        html_content = f.read()
-    
-    # 设置视口为A4尺寸
-    await page.setViewport({'width': 595, 'height': 842})
-    
-    # 加载HTML内容
-    await page.goto(f'file://{os.path.abspath(html_path)}', waitUntil='networkidle0')
-    
-    # 计算内容的宽度和高度
-    content_width = await page.evaluate('document.body.scrollWidth')
-    content_height = await page.evaluate('document.body.scrollHeight')
-    
-    # 确定使用横向还是纵向
-    is_landscape = content_width > content_height
-    
-    # 计算缩放比例
-    width_scale = 595 / content_width
-    height_scale = 842 / content_height
-    scale = min(width_scale, height_scale)
-    
-    # 确保缩放比例不会过大
-    scale = min(scale, 1.0)
-    
-    # 创建PDF保存目录
-    os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
-    
-    # 保存为PDF
-    await page.pdf({
-        'path': pdf_path,
-        'format': 'A4',
-        'landscape': is_landscape,
-        'scale': scale,
-        'printBackground': True
-    })
-    
-    await browser.close()
-    print(f"已转换: {html_path} -> {pdf_path}")
-
-async def main():
-    """主函数：处理所有HTML文件"""
-    html_dir = Path('public/html')
-    pdf_dir = Path('public/pdf')
-    
-    # 确保输出目录存在
-    pdf_dir.mkdir(parents=True, exist_ok=True)
-    
-    # 获取所有HTML文件
-    html_files = list(html_dir.rglob('*.html'))
-    
-    if not html_files:
-        print("未找到HTML文件")
-        return
-    
-    # 处理每个HTML文件
-    for html_file in html_files:
-        # 计算对应的PDF路径，保持目录结构
-        relative_path = html_file.relative_to(html_dir)
-        pdf_file = pdf_dir / relative_path.with_suffix('.pdf')
-        
-        # 确保父目录存在
-        pdf_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        # 转换HTML到PDF
-        await convert_html_to_pdf(str(html_file), str(pdf_file))
+def convert_html_to_pdf(html_dir, pdf_dir):
+    # 遍历HTML目录及其子目录
+    for root, dirs, files in os.walk(html_dir):
+        for file in files:
+            if file.endswith('.html'):
+                html_path = os.path.join(root, file)
+                relative_path = os.path.relpath(root, html_dir)
+                pdf_subdir = os.path.join(pdf_dir, relative_path)
+                
+                # 创建对应的PDF子目录
+                os.makedirs(pdf_subdir, exist_ok=True)
+                
+                # 构造PDF输出路径
+                pdf_name = os.path.splitext(file)[0] + '.pdf'
+                pdf_path = os.path.join(pdf_subdir, pdf_name)
+                
+                # 使用WeasyPrint生成PDF
+                try:
+                    html = HTML(html_path)
+                    # 获取页面尺寸并动态调整方向和缩放
+                    page_size = 'A4'
+                    orientation = 'portrait'  # 默认纵向
+                    zoom_factor = 1.0
+                    
+                    # 渲染HTML到PDF
+                    html.write_pdf(
+                        pdf_path,
+                        stylesheets=[],
+                        presentational_hints=True,
+                        optimize_images=True,
+                        zoom=zoom_factor,
+                        dpi=300,
+                        base_url=os.path.dirname(html_path),
+                        margin_top='0mm',
+                        margin_right='0mm',
+                        margin_bottom='0mm',
+                        margin_left='0mm',
+                        format=page_size,
+                        orientation=orientation
+                    )
+                    print(f"已转换: {html_path} -> {pdf_path}")
+                except Exception as e:
+                    print(f"转换失败: {html_path}, 错误: {e}")
 
 if __name__ == "__main__":
-    # 运行异步主函数
-    asyncio.run(main())    
+    html_dir = "public/html"
+    pdf_dir = "public/pdf"
+    
+    # 清空目标PDF目录（如果存在）
+    if os.path.exists(pdf_dir):
+        shutil.rmtree(pdf_dir)
+    os.makedirs(pdf_dir, exist_ok=True)
+    
+    # 开始转换
+    convert_html_to_pdf(html_dir, pdf_dir)
