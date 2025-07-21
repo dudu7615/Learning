@@ -16,7 +16,7 @@ jobs:
 
       - name: get date time
         id: date
-        run: echo "date_time=$(date +'%Y-%m-%dT%H:%M:%S%z')" >> $GITHUB_ENV
+        run: echo "date_time=$(TZ='Asia/Shanghai' date +'%Y-%m-%dT%H-%M-%S%z')" >> $GITHUB_ENV
 
       - name: get git diff
         id: git_diff
