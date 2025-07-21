@@ -16,7 +16,7 @@ jobs:
 
       - name: get date time
         id: date
-        run: date +"%Y-%m-%dT%H:%M:%S%z" >> $GITHUB_ENV
+        run: echo "date_time=$(date +'%Y-%m-%dT%H:%M:%S%z')" >> $GITHUB_ENV
 
       - name: get git diff
         id: git_diff
@@ -28,13 +28,10 @@ jobs:
           # 生成两次提交之间的差异
           DIFF=$(git diff $PREVIOUS_COMMIT $CURRENT_COMMIT || true)
           # 转义特殊字符，避免破坏环境文件格式
-          ESCAPED_DIFF="${DIFF//'%'/'%25'}"
-          ESCAPED_DIFF="${ESCAPED_DIFF//$'\n'/'%0A'}"
-          ESCAPED_DIFF="${ESCAPED_DIFF//$'\r'/'%0D'}"
           # 使用 GitHub 环境文件语法设置多行环境变量
-          echo "diff<<EOF" >> $GITHUB_ENV
-          echo "$ESCAPED_DIFF" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          echo "diff<<EOF" > 0
+          echo "$DIFF" >> 0 
+          echo "EOF" >> 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
