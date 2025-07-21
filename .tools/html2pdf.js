@@ -29,7 +29,8 @@ const path = require('path');
         fs.mkdirSync(path.dirname(pdffile), { recursive: true });
         const page = await browser.newPage();
         await page.goto('file://' + path.resolve(htmlfile), { waitUntil: 'networkidle0' });
-
+        
+        await page.waitForTimeout(2000); 
         // 获取 HTML 页面的实际宽度
         const bodyWidth = await page.evaluate(() => {
             return document.body.scrollWidth;
