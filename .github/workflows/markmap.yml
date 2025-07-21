@@ -80,9 +80,6 @@ jobs:
           tag_name: release-${{ env.date_time }}
           release_name: Release ${{ env.date_time }}
           body: |
-            发布时间: ${{ env.date_time }}
-
-            ### 代码变更
             ```diff
             ${{ env.diff }}
             ```
