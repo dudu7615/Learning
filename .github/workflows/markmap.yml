@@ -43,13 +43,13 @@ jobs:
           npm install -g markmap-cli
           npm install puppeteer
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.13"
+      # - name: Set up Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: "3.13"
 
-      - name: Install pip packages
-        run: pip install weasyprint cairocffi pillow
+      # - name: Install pip packages
+      #   run: pip install weasyprint cairocffi pillow
 
       - name: Install CN fonts
         run: |
@@ -71,8 +71,8 @@ jobs:
         run: bash .tools/md2html.sh
 
       - name: Convert all HTML in public/html to PDF in public/pdf (preserve structure)
-        # run: node .tools/html2pdf.js
-        run: python .tools/html2pdf.py
+        run: node .tools/html2pdf.js
+        # run: python .tools/html2pdf.py
 
       - name: pack PDF files
         run: |
