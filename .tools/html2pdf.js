@@ -32,7 +32,13 @@ async function convertHtmlToPdf(htmlFilePath) {
 
     // 确定方向和缩放比例
     const isLandscape = dimensions.width > dimensions.height;
-    const scale = Math.min(1, 842 / dimensions.height, 595 / dimensions.width); // A4尺寸
+    const a4Width = 595; // A4宽度（点）
+    const a4Height = 842; // A4高度（点）
+
+    // 计算最佳缩放比例
+    const scaleWidth = a4Width / dimensions.width;
+    const scaleHeight = a4Height / dimensions.height;
+    const scale = Math.min(1, scaleWidth, scaleHeight);
 
     // 生成PDF
     const pdfBuffer = await page.pdf({
