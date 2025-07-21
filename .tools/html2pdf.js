@@ -16,7 +16,9 @@ function traverseDirectory(dir, callback) {
 
 // 将HTML文件转换为PDF
 async function convertHtmlToPdf(htmlFilePath) {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
 
     // 加载HTML文件
